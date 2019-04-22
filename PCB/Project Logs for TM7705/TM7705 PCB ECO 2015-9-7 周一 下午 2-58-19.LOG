@@ -1,0 +1,25 @@
+Added Component: Designator=S1(SW)
+Added Component: Designator=S2(SW)
+Added Component: Designator=S3(SW)
+Added Pin To Net: NetName=GND Pin=S1-1
+Added Pin To Net: NetName=GND Pin=S1-1
+Added Pin To Net: NetName=GND Pin=S2-1
+Added Pin To Net: NetName=GND Pin=S2-1
+Added Pin To Net: NetName=GND Pin=S3-1
+Added Pin To Net: NetName=GND Pin=S3-1
+Added Pin To Net: NetName=NetS1_2 Pin=S1-2
+Added Pin To Net: NetName=NetS1_2 Pin=S1-2
+Added Pin To Net: NetName=NetS1_2 Pin=U2-6
+Added Net: Name=NetS1_2
+Added Pin To Net: NetName=NetS2_2 Pin=S2-2
+Added Pin To Net: NetName=NetS2_2 Pin=S2-2
+Added Pin To Net: NetName=NetS2_2 Pin=U2-7
+Added Net: Name=NetS2_2
+Added Pin To Net: NetName=NetS3_2 Pin=S3-2
+Added Pin To Net: NetName=NetS3_2 Pin=S3-2
+Added Pin To Net: NetName=NetS3_2 Pin=U2-8
+Added Net: Name=NetS3_2
+Added Member To Class: ClassName=TM7705 Member=Component S1 SW-PB
+Added Member To Class: ClassName=TM7705 Member=Component S2 SW-PB
+Added Member To Class: ClassName=TM7705 Member=Component S3 SW-PB
+Added Room: Name=TM7705

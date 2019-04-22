@@ -1,0 +1,14 @@
+Removed Pin From Net: NetName=ROAD Pin=P3-2
+Change Component Comment : Designator=P3 Old Comment=IN New Comment=OUT
+Change Component Comment : Designator=P4 Old Comment=OUT New Comment=IN
+Added Component: Designator=R3(0805R)
+Added Component: Designator=R4(0805R)
+Added Pin To Net: NetName=GND Pin=P3-2
+Added Pin To Net: NetName=DIN Pin=R3-1
+Added Pin To Net: NetName=+5VCC Pin=R3-2
+Added Pin To Net: NetName=DOUT Pin=R4-1
+Added Pin To Net: NetName=+5VCC Pin=R4-2
+Change Net Name : Old Net Name=ROAD New Net Name=LOAD_V
+Added Member To Class: ClassName=TM7705 Member=Component R3 10K
+Added Member To Class: ClassName=TM7705 Member=Component R4 10K
+Added Room: Name=TM7705

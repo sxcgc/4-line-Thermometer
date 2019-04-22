@@ -1,0 +1,5 @@
+Added Component: Designator=TL1(TL431)
+Added Pin To Net: NetName=GND Pin=TL1-A
+Added Pin To Net: NetName=NetC11_1 Pin=TL1-K
+Added Pin To Net: NetName=NetC11_1 Pin=TL1-R
+Added Member To Class: ClassName=TM7705 Member=Component TL1 TL431

@@ -1,0 +1,15 @@
+Removed Pin From Net: NetName=DRDY Pin=U2-11
+Removed Pin From Net: NetName=DIN Pin=U2-12
+Removed Pin From Net: NetName=DOUT Pin=U2-13
+Added Component: Designator=R3(0805R)
+Added Component: Designator=R4(0805R)
+Added Pin To Net: NetName=DIN Pin=R3-1
+Added Pin To Net: NetName=+5VCC Pin=R3-2
+Added Pin To Net: NetName=DOUT Pin=R4-1
+Added Pin To Net: NetName=+5VCC Pin=R4-2
+Added Pin To Net: NetName=DIN Pin=U2-11
+Added Pin To Net: NetName=DOUT Pin=U2-12
+Added Pin To Net: NetName=DRDY Pin=U2-13
+Added Member To Class: ClassName=TM7705 Member=Component R3 10K
+Added Member To Class: ClassName=TM7705 Member=Component R4 10K
+Added Room: Name=TM7705

@@ -1,0 +1,19 @@
+Removed Pin From Net: NetName=V Pin=R6-1
+Removed Pin From Net: NetName=LOAD_V Pin=R6-2
+Removed Pin From Net: NetName=V Pin=R7-1
+Removed Pin From Net: NetName=I Pin=R7-2
+Change Component Comment : Designator=R7 Old Comment=10k New Comment=100k
+Change Component Comment : Designator=R6 Old Comment=100K New Comment=5K
+Added Component: Designator=R3(0805R)
+Added Component: Designator=R4(0805R)
+Added Pin To Net: NetName=DIN Pin=R3-1
+Added Pin To Net: NetName=+5VCC Pin=R3-2
+Added Pin To Net: NetName=DOUT Pin=R4-1
+Added Pin To Net: NetName=+5VCC Pin=R4-2
+Added Pin To Net: NetName=I Pin=R6-1
+Added Pin To Net: NetName=V Pin=R6-2
+Added Pin To Net: NetName=LOAD_V Pin=R7-1
+Added Pin To Net: NetName=V Pin=R7-2
+Added Member To Class: ClassName=TM7705 Member=Component R3 10K
+Added Member To Class: ClassName=TM7705 Member=Component R4 10K
+Added Room: Name=TM7705
