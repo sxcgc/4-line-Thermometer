@@ -1,0 +1,331 @@
+/**
+  ******************************************************************************
+  * File Name          : main.c
+  * Description        : Main program body
+  ******************************************************************************
+  ** This notice applies to any and all portions of this file
+  * that are not between comment pairs USER CODE BEGIN and
+  * USER CODE END. Other portions of this file, whether 
+  * inserted by the user or by software development tools
+  * are owned by their respective copyright owners.
+  *
+  * COPYRIGHT(c) 2018 STMicroelectronics
+  *
+  * Redistribution and use in source and binary forms, with or without modification,
+  * are permitted provided that the following conditions are met:
+  *   1. Redistributions of source code must retain the above copyright notice,
+  *      this list of conditions and the following disclaimer.
+  *   2. Redistributions in binary form must reproduce the above copyright notice,
+  *      this list of conditions and the following disclaimer in the documentation
+  *      and/or other materials provided with the distribution.
+  *   3. Neither the name of STMicroelectronics nor the names of its contributors
+  *      may be used to endorse or promote products derived from this software
+  *      without specific prior written permission.
+  *
+  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+  * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+  * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+  * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  *
+  ******************************************************************************
+  */
+
+/* Includes ------------------------------------------------------------------*/
+#include "main.h"
+#include "stm32f1xx_hal.h"
+#include "tim.h"
+#include "usart.h"
+#include "gpio.h"
+
+/* USER CODE BEGIN Includes */
+
+#include "bsp_tm7705.h"
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
+#include "type_com.h"
+#include "myflash.h"
+#include "usart_order.h"
+#include "smg.h"
+/* USER CODE END Includes */
+
+/* Private variables ---------------------------------------------------------*/
+
+/* USER CODE BEGIN PV */
+#define TXFlashLength 4096*2
+/* Private variables ---------------------------------------------------------*/
+uint32_t Flash_ID = 0;
+uint8_t RxBuffer[TXFlashLength],TxBuffer[TXFlashLength];
+uint32_t i;
+uint16_t adc1, adc2, offset_zero, offset_full;
+float tempt;
+char Buffer[50];
+uint8_t index;
+double PT_sensor,Temp;
+stm32_flash_type Adjust;// 0.998223;
+stm32_flash_type a,b,c;
+UART_type T_data,R_data;
+uint8_t Line_head = 0xA6;
+double T_Temp,Res_Temp;
+int index_temp=0;
+/* USER CODE END PV */
+
+/* Private function prototypes -----------------------------------------------*/
+void SystemClock_Config(void);
+
+/* USER CODE BEGIN PFP */
+/* Private function prototypes -----------------------------------------------*/
+float Volt_2_Ohm(uint16_t adc);
+double tempCalc( double dianzu );
+double KalmanFilter(const double ResrcData,double ProcessNiose_Q,double MeasureNoise_R,double InitialPrediction);
+double fit( double Res);
+/* USER CODE END PFP */
+
+/* USER CODE BEGIN 0 */
+
+/* USER CODE END 0 */
+
+int main(void)
+{
+
+  /* USER CODE BEGIN 1 */
+
+  /* USER CODE END 1 */
+
+  /* MCU Configuration----------------------------------------------------------*/
+
+  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+  HAL_Init();
+
+  /* USER CODE BEGIN Init */
+
+  /* USER CODE END Init */
+
+  /* Configure the system clock */
+  SystemClock_Config();
+
+  /* USER CODE BEGIN SysInit */
+
+  /* USER CODE END SysInit */
+
+  /* Initialize all configured peripherals */
+  MX_GPIO_Init();
+  MX_USART1_UART_Init();
+  MX_TIM4_Init();
+
+  /* USER CODE BEGIN 2 */
+  TYPE = 0;
+  HAL_TIM_Base_Start_IT(&htim4);
+  //开启接受中断
+  if(HAL_UART_Receive_IT(&huart1,buf1,1)!=HAL_OK)Error_Handler();
+  //读入flash的矫正参数
+  Adjust.intb = *(__IO uint64_t*)(addr1);
+  a.intb = *(__IO uint64_t*)(addr2); 
+  b.intb = *(__IO uint64_t*)(addr3);
+  c.intb = *(__IO uint64_t*)(addr4);
+  bsp_InitTM7705();			/* 初始化配置TM7705 */
+  //TM7705_CalibSelf(1);		/* 自校准。执行时间较长，约180ms */		
+  
+  /* USER CODE END 2 */
+
+  /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
+  while (1)
+  {
+  /* USER CODE END WHILE */
+
+  /* USER CODE BEGIN 3 */
+    T_Temp = 0;
+    Res_Temp = 0;
+    for(index_temp = 0;index_temp <25;index_temp ++)
+    {
+      if(HAL_GPIO_ReadPin(GPIOC,KEY_3_Pin) == GPIO_PIN_SET){
+        adc1 =  TM7705_ReadAdc(1);	/* 执行时间 20ms (50Hz速率刷新时） */
+      }
+      else if(HAL_GPIO_ReadPin(GPIOC,KEY_3_Pin) == GPIO_PIN_RESET){
+        adc1 =  TM7705_ReadAdc(2);
+      }
+      PT_sensor = KalmanFilter(Volt_2_Ohm(adc1),0.018,0.4,0)*Adjust.doublea;
+      PT_sensor = fit(PT_sensor);
+      Temp = tempCalc(PT_sensor);
+      T_data.a = Temp;
+      R_data.a = PT_sensor;
+      T_Temp += Temp;
+      Res_Temp += PT_sensor;
+      //HAL_UART_Transmit(&huart1,T_data.b,4,20);
+      //HAL_UART_Transmit(&huart1,R_data.b,4,20);
+    }
+
+    PT_sensor = Res_Temp / 25;
+    Temp = T_Temp / 25;
+    
+    if(HAL_GPIO_ReadPin(GPIOC,KEY_2_Pin) == GPIO_PIN_SET){
+      TYPE = 0;
+      SMG_num = Temp+0.05;
+    }
+    if(HAL_GPIO_ReadPin(GPIOC,KEY_2_Pin) == GPIO_PIN_RESET){
+      TYPE = 1;
+      SMG_num = PT_sensor+0.005;
+    }
+    
+    printf("%.3lf Ohm %.1lf C\r\n",PT_sensor,Temp);
+    HAL_GPIO_TogglePin(GPIOB,LED1_Pin);
+  }
+  /* USER CODE END 3 */
+
+}
+
+/** System Clock Configuration
+*/
+void SystemClock_Config(void)
+{
+
+  RCC_OscInitTypeDef RCC_OscInitStruct;
+  RCC_ClkInitTypeDef RCC_ClkInitStruct;
+
+    /**Initializes the CPU, AHB and APB busses clocks 
+    */
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+  RCC_OscInitStruct.HSEPredivValue = RCC_HSE_PREDIV_DIV1;
+  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+  RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL9;
+  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
+
+    /**Initializes the CPU, AHB and APB busses clocks 
+    */
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
+                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
+
+    /**Configure the Systick interrupt time 
+    */
+  HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/1000);
+
+    /**Configure the Systick 
+    */
+  HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
+
+  /* SysTick_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
+}
+
+/* USER CODE BEGIN 4 */
+double fit( double Res)
+{
+  return c.doublea + Res*b.doublea + Res*Res*a.doublea;
+}
+float Volt_2_Ohm(uint16_t adc)
+{
+  double Full_Scope = 65535;
+  double Amp = 16;
+  double Res = 4300;
+  
+  return (float)adc/Full_Scope/Amp*Res;
+}
+
+double tempCalc( double dianzu )
+{
+  
+  float t=0.0;
+  double b2,ac,d;
+  b2 = (3.9083E-3*100)*(3.9083E-3*100);
+  ac =4*(-5.775E-7)*100*(100-dianzu);
+  d = 3.9083E-3*100;
+    
+  t=(sqrt((b2-ac)*10000)/100-d)/2/(-5.775E-7)/100;
+  return t;
+}
+
+double KalmanFilter(const double ResrcData,double ProcessNiose_Q,double MeasureNoise_R,double InitialPrediction)
+{
+        double R = MeasureNoise_R;
+        double Q = ProcessNiose_Q;
+        static        double x_last;
+
+        double x_mid = x_last;
+        double x_now;
+
+        static        double p_last;
+
+        double p_mid ;
+        double p_now;
+        double kg;       
+
+        x_mid=x_last; //x_last=x(k-1|k-1),x_mid=x(k|k-1)
+        p_mid=p_last+Q; //p_mid=p(k|k-1),p_last=p(k-1|k-1),Q=????
+        kg=p_mid/(p_mid+R); //kg?kalman filter??R?????
+        x_now=x_mid+kg*(ResrcData-x_mid);//????????????
+               
+        p_now=(1-kg)*p_mid;//??????????covariance       
+
+        p_last = p_now; //????covariance?
+        x_last = x_now; //?????????
+
+        return x_now;               
+}
+/* USER CODE END 4 */
+
+/**
+  * @brief  This function is executed in case of error occurrence.
+  * @param  None
+  * @retval None
+  */
+void _Error_Handler(char * file, int line)
+{
+  /* USER CODE BEGIN Error_Handler_Debug */
+  /* User can add his own implementation to report the HAL error return state */
+  while(1) 
+  {
+  }
+  /* USER CODE END Error_Handler_Debug */ 
+}
+
+#ifdef USE_FULL_ASSERT
+
+/**
+   * @brief Reports the name of the source file and the source line number
+   * where the assert_param error has occurred.
+   * @param file: pointer to the source file name
+   * @param line: assert_param error line source number
+   * @retval None
+   */
+void assert_failed(uint8_t* file, uint32_t line)
+{
+  /* USER CODE BEGIN 6 */
+  /* User can add his own implementation to report the file name and line number,
+    ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+  /* USER CODE END 6 */
+
+}
+
+#endif
+
+/**
+  * @}
+  */ 
+
+/**
+  * @}
+*/ 
+
+/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
