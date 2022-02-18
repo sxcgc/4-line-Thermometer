@@ -1,0 +1,8 @@
+[ProjectGroup]
+Version=1.0
+[Project1]
+ProjectPath=Documents\TTL\TTL.PrjPcb
+[Project2]
+ProjectPath=Documents\RS232\RS232.PrjPcb
+[Project3]
+ProjectPath=..\TEMP\PCB_Project1.PrjPCB
